@@ -134,7 +134,7 @@ dpu_elf_load(dpu_elf_file_t file, dpu_loader_context_t context)
             load_functions.load_regs = load_rank_regs;
 
             if (info->filename != NULL) { // filename이 null이 아닌경우. 
-                if ((status = dpu_custom_for_rank( //해당 파일의 경로를 DPU에 전달. 
+                if ((status = dpu_custom_for_rank( //해당 랭크의 정보나 파일, 명령어가 제대로 삽입 됐는지 확인?
                          context->env.rank, DPU_COMMAND_BINARY_PATH, (dpu_custom_command_args_t)info->filename))
                     != DPU_OK) {
                     goto end;
@@ -171,16 +171,16 @@ dpu_elf_load(dpu_elf_file_t file, dpu_loader_context_t context)
             status = DPU_ERR_INTERNAL;
             goto end;
     }
-
-    for (unsigned int each_phdr = 0; each_phdr < phdrnum; ++each_phdr) {
+    ///////////////////ELF 파일은 여러 세그먼트로 구성, 각 세그먼트는 프로그램 헤더에 의해 기술
+    for (unsigned int each_phdr = 0; each_phdr < phdrnum; ++each_phdr) { // 프로그램 헤더 반복
         GElf_Phdr phdr;
         if (gelf_getphdr(info->elf, each_phdr, &phdr) != &phdr) {
             status = DPU_ERR_ELF_INVALID_FILE;
             goto end;
         }
 
-        if (phdr.p_type == PT_LOAD) {
-            if ((status = load_segment(info, context, &load_functions, &phdr)) != DPU_OK) {
+        if (phdr.p_type == PT_LOAD) { // 프로그램 헤더가 LOAD 세그먼트인지 확인?
+            if ((status = load_segment(info, context, &load_functions, &phdr)) != DPU_OK) { // 세그먼트를 로드하기 위한 준비인 것 같음.
                 goto end;
             }
         }
@@ -189,7 +189,7 @@ dpu_elf_load(dpu_elf_file_t file, dpu_loader_context_t context)
     switch (context->env.target) {
         case DPU_LOADER_TARGET_RANK:
             if ((status = dpu_custom_for_rank(
-                     context->env.rank, DPU_COMMAND_EVENT_END, (dpu_custom_command_args_t)DPU_EVENT_LOAD_PROGRAM))
+                     context->env.rank, DPU_COMMAND_EVENT_END, (dpu_custom_command_args_t)DPU_EVENT_LOAD_PROGRAM)) //이벤트 엔드?
                 != DPU_OK) {
                 goto end;
             }
@@ -222,20 +222,20 @@ load_segment(elf_fd info, dpu_loader_context_t context, struct dpu_load_memory_f
     uint32_t *size_accumulator;
 
     if ((status = extract_and_convert_memory_information(
-             phdr, context, load_functions, &addr, &size, &size_accumulator, &do_load, &do_patch))
+             phdr, context, load_functions, &addr, &size, &size_accumulator, &do_load, &do_patch)) //메모리 영역의 뭐 세그먼트 가상주소 및 사이즈 등의 정보 넣고, 어떤 함수 실행할지 넣고
         != DPU_OK) {
         goto end;
     }
 
-    if ((status = fetch_content(info, phdr, &content)) != DPU_OK) {
+    if ((status = fetch_content(info, phdr, &content)) != DPU_OK) { //content에 세그먼트의 내용을 추출해서 넣음
         goto end;
     }
 
-    if ((do_patch != NULL) && ((status = do_patch(&context->env, content, addr, size, *size_accumulator == 0)) != DPU_OK)) {
+    if ((do_patch != NULL) && ((status = do_patch(&context->env, content, addr, size, *size_accumulator == 0)) != DPU_OK)) { 
         goto free_content;
     }
 
-    if ((status = do_load(&context->env, content, addr, size)) != DPU_OK) {
+    if ((status = do_load(&context->env, content, addr, size)) != DPU_OK) { //함수 정보가 없으면??
         goto free_content;
     }
 
@@ -257,27 +257,27 @@ extract_and_convert_memory_information(GElf_Phdr *phdr,
     mem_load_function_t *do_load,
     mem_patch_function_t *do_patch)
 {
-    *addr = (uint32_t)phdr->p_vaddr;
-    *size = (uint32_t)phdr->p_memsz;
+    *addr = (uint32_t)phdr->p_vaddr; //세그먼트 가상주소?
+    *size = (uint32_t)phdr->p_memsz; //메모리 사이즈
 
     if (*addr == REGS_MASK) {
         *do_load = load_functions->load_regs;
         *do_patch = NULL;
         *size_accumulator = &context->dummy;
-    } else if ((*addr & IRAM_MASK) == IRAM_MASK) {
-        if ((*addr & ~IRAM_ALIGN_MASK) != 0) {
+    } else if ((*addr & IRAM_MASK) == IRAM_MASK) { //IRAM MASK? IRAM 영역
+        if ((*addr & ~IRAM_ALIGN_MASK) != 0) { //유효성 확인?
             return DPU_ERR_INVALID_IRAM_ACCESS;
         }
         if ((*size & ~IRAM_ALIGN_MASK) != 0) {
-            return DPU_ERR_INVALID_IRAM_ACCESS;
+            return DPU_ERR_INVALID_IRAM_ACCESS; //사이즈 및 주소 체크
         }
 
-        *addr = (*addr & ~IRAM_MASK) >> IRAM_ALIGN;
+        *addr = (*addr & ~IRAM_MASK) >> IRAM_ALIGN; //주소 및 사이즈 조정?
         *size = *size >> IRAM_ALIGN;
-        *do_load = load_functions->load_iram;
+        *do_load = load_functions->load_iram; //함수 넣기?
         *do_patch = context->patch_iram;
         *size_accumulator = &context->nr_of_instructions;
-    } else if ((*addr & MRAM_MASK) == MRAM_MASK) {
+    } else if ((*addr & MRAM_MASK) == MRAM_MASK) { //MRAM 영역 
         *addr = (*addr & ~MRAM_MASK);
         *do_load = load_functions->load_mram;
         *do_patch = context->patch_mram;
@@ -301,24 +301,24 @@ extract_and_convert_memory_information(GElf_Phdr *phdr,
 }
 
 static dpu_error_t
-fetch_content(elf_fd info, GElf_Phdr *phdr, uint8_t **content)
+fetch_content(elf_fd info, GElf_Phdr *phdr, uint8_t **content) //세그먼트의 내용을 추출?
 {
     dpu_error_t status;
 
-    if ((*content = calloc(1, phdr->p_memsz)) == NULL) {
+    if ((*content = calloc(1, phdr->p_memsz)) == NULL) { //세그먼트의 내용을 저장하기 위해 할당
         status = DPU_ERR_SYSTEM;
         goto end;
     }
 
     char *raw_ptr;
     size_t size;
-    if ((raw_ptr = elf_rawfile(info->elf, &size)) == NULL) {
+    if ((raw_ptr = elf_rawfile(info->elf, &size)) == NULL) { //ELF 파일의 raw 가져오기
         status = DPU_ERR_ELF_INVALID_FILE;
         goto free_content;
     }
 
-    memcpy(*content, raw_ptr + phdr->p_offset, phdr->p_filesz);
-
+    memcpy(*content, raw_ptr + phdr->p_offset, phdr->p_filesz); //elf에서 관련 세그먼트 내용을 할당된 메모리로 복사
+    //복사의 소스 주소는 raw 포인터 + 오프셋 
     return DPU_OK;
 
 free_content:

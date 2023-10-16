@@ -1,7 +1,8 @@
 {
   "files.associations": {
     "dpu_elf_internals.h": "c",
-    "type_traits": "c"
+    "type_traits": "c",
+    "*.def": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

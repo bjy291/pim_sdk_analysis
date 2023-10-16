@@ -83,7 +83,7 @@ dpu_copy_to_iram_for_rank(struct dpu_rank_t *rank,
 {
     LOG_RANK(DEBUG, rank, "%u, %u", iram_instruction_index, nb_of_instructions);
 
-    verify_iram_access(iram_instruction_index, nb_of_instructions, rank);
+    verify_iram_access(iram_instruction_index, nb_of_instructions, rank); //접근 유효성
 
     dpu_lock_rank(rank);
     dpu_error_t status = RANK_FEATURE(rank, copy_to_irams_rank)(rank, iram_instruction_index, source, nb_of_instructions);
