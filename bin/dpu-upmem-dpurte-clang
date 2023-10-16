@@ -1,0 +1,8 @@
+#!/bin/bash
+if [ -z "${UPMEM_NO_OS_WARNING}" ]; then
+    echo -e '\033[0;33m'WARNING:'\033[0m' This is the last release of the DPU toolchain for ON. >&2
+    echo "         Please consider upgrading to a more recent OS." >&2
+    echo "         (Suppress this message by setting the environment variable UPMEM_NO_OS_WARNING to 1.)" >&2
+fi
+DPU_CLANG_DIR="$(dirname "$0")"
+"${DPU_CLANG_DIR}/clang" --target=dpu-upmem-dpurte "$@"
