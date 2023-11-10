@@ -544,18 +544,18 @@ ci_copy_from_mrams(struct dpu_rank_t *rank, struct dpu_transfer_matrix *matrix)
 }
 
 __API_SYMBOL__ dpu_error_t ci_copy_to_wrams_rank(struct dpu_rank_t *rank,
-						 wram_addr_t wram_word_offset,
-						 const dpuword_t *source,
-						 wram_size_t nb_of_words)
+						 wram_addr_t wram_word_offset, //uint32_t wram address
+						 const dpuword_t *source, //uint32_t wram word data
+						 wram_size_t nb_of_words) //uint32_t wram size
 {
 	dpu_error_t status;
-	uint8_t mask = ALL_CIS;
+	uint8_t mask = ALL_CIS; //all control interface select 
 	dpuword_t *wram_array[DPU_MAX_NR_CIS] = { [0 ... DPU_MAX_NR_CIS - 1] =
-							  (dpuword_t *)source };
+							  (dpuword_t *)source }; //WRAM data 
 
-	FF(ufi_select_all(rank, &mask));
+	FF(ufi_select_all(rank, &mask)); //target all이나 group이냐에 따라 write 작업이 있, 아니면 maks 업데이트, 체크필요
 	FF(ufi_wram_write(rank, mask, wram_array, wram_word_offset,
-			  nb_of_words));
+			  nb_of_words)); 
 
 end:
 	return status;
