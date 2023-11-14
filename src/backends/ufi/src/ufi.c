@@ -185,7 +185,8 @@ __API_SYMBOL__ u32 ufi_select_all(struct dpu_rank_t *rank, u8 *ci_mask)
 	u32 status = DPU_OK;
 	u64 structs[DPU_MAX_NR_CIS];
 	u64 *cmds = GET_CMDS(rank); // 전송할 cmds[DPU_MAX_NR_CIS]
-	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; // 컨트롤 인터페이스의 개수?
+	//cmds[0] : 3738127053816332288
+	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; // 컨트롤 인터페이스의 개수
 
 	//이 구조에는 디버거가 이를 제어하고 애플리케이션이 올바르게 재개되도록 컨텍스트를 복원할 수 있도록 모든 애플리케이션에서 공유해야 하는 모든 정보가 포함
 	struct dpu_configuration_slice_info_t *info = 
@@ -196,12 +197,12 @@ __API_SYMBOL__ u32 ufi_select_all(struct dpu_rank_t *rank, u8 *ci_mask)
 	u8 each_ci;
 
 	/* Initialize structs with default value (CI_EMPTY) */
-	ci_prepare_mask(structs, 0, 0);
+	ci_prepare_mask(structs, 0, 0); //wram write시 그냥 다 0
 
 	for_each_ci (each_ci, nr_cis, mask) {
 		struct dpu_configuration_slice_info_t *ci_info = &info[each_ci]; //체크
 
-		if (ci_info->all_dpus_are_enabled) { //boolean
+		if (ci_info->all_dpus_are_enabled) { //boolean //여기 영역은 alloc 할 때 탐.
 			if (ci_info->slice_target.type != //target all
 			    DPU_SLICE_TARGET_ALL) {
 				structs[each_ci] = CI_SELECT_ALL_STRUCT; //cmds 
@@ -225,14 +226,15 @@ __API_SYMBOL__ u32 ufi_select_all(struct dpu_rank_t *rank, u8 *ci_mask)
 					ci_info->slice_target.group_id =
 						DPU_ENABLED_GROUP;
 					do_select = true;
-				} else {
+				} else { //여기 영역은 launch, load할 때 탐. 처음 탈 땐 slice_target 1번, 나머지 7번 else, <-- mram 인듯?
+				         //다음 탈 땐 7번 다 여기 <-- wram write 할 때
 					mask &= ~CI_MASK_ONE(each_ci); //#define CI_MASK_ONE(ci) (1u << (ci))
 				}
 			}
 		}
 	}
 
-	if (do_select) { //if true
+	if (do_select) { //if true //wram write시 안 탐
 		FF(UFI_exec_void_frames(rank, mask, structs, cmds)); //체크
 	}
 
@@ -947,7 +949,7 @@ end:
 
 __API_SYMBOL__ u32 ufi_wram_write(struct dpu_rank_t *rank, u8 ci_mask,
 				  u32 **src, u16 offset, u16 len) //src : data, offset : addr, len : size
-{
+{   //offset은 0으로 넘어옴. 
 	u32 status = DPU_OK;
 	u64 *cmds = GET_CMDS(rank);
 	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //number of CI
@@ -1229,15 +1231,17 @@ static u32 UFI_exec_write_structure(struct dpu_rank_t *rank, u8 ci_mask,
 	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //CI 개수? 체크
 	u8 each_ci;
 
+    //첫 번째 4번 반복하면서 다 타고, 두 번째는 전혀 안 타
 	bool do_write_structure = false;
 	for_each_ci (each_ci, nr_cis, ci_mask) {
-		if (ci->slice_info[each_ci].structure_value != structure) {
+		if (ci->slice_info[each_ci].structure_value != structure) { 
 			ci->slice_info[each_ci].structure_value = structure;
 			do_write_structure = true;
 		}
 	}
 
 	if (do_write_structure) {
+		//ci_mask와 structure와 조합해서 cmds를 생성하는듯
 		ci_prepare_mask(cmds, ci_mask, structure);
 		FF(ci_exec_void_cmd(rank, cmds));
 	}
