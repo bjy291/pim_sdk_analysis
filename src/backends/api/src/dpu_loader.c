@@ -119,7 +119,7 @@ dpu_loader_fill_rank_context(dpu_loader_context_t context, struct dpu_rank_t *ra
 }
 
 __API_SYMBOL__ dpu_error_t
-dpu_elf_load(dpu_elf_file_t file, dpu_loader_context_t context)
+dpu_elf_load(dpu_elf_file_t file, dpu_loader_context_t context) //context는 rank의 정보
 {
     dpu_error_t status = DPU_OK;
     elf_fd info = (elf_fd)file; //ELF 파일 정보 가져오기.

@@ -3,7 +3,14 @@
     "dpu_elf_internals.h": "c",
     "type_traits": "c",
     "*.def": "c",
+<<<<<<< HEAD
+    "ufi_config.h": "c",
+    "ufi_rank_utils.h": "c",
+    "stdbool.h": "c",
+    "static_verbose.h": "c"
+=======
     "dpu_attributes.h": "c"
+>>>>>>> a31321e987ff89d2221b739ea294029eb75c9707
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

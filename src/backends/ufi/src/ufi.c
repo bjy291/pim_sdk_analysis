@@ -1226,7 +1226,11 @@ static u32 UFI_exec_write_structure(struct dpu_rank_t *rank, u8 ci_mask,
 				    u64 structure) //addr를 담은 command
 {
 	u32 status = DPU_OK;
+<<<<<<< HEAD
+	u64 *cmds = GET_CMDS(rank); //체크
+=======
 	u64 *cmds = GET_CMDS(rank); //8공간 cmds 배열 불러오는 듯?
+>>>>>>> a31321e987ff89d2221b739ea294029eb75c9707
 	struct dpu_control_interface_context *ci = GET_CI_CONTEXT(rank);
 	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //CI 개수? 체크
 	u8 each_ci;
