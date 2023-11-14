@@ -2,7 +2,11 @@
   "files.associations": {
     "dpu_elf_internals.h": "c",
     "type_traits": "c",
-    "*.def": "c"
+    "*.def": "c",
+    "ufi_config.h": "c",
+    "ufi_rank_utils.h": "c",
+    "stdbool.h": "c",
+    "static_verbose.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

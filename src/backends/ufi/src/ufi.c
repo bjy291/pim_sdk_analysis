@@ -1222,7 +1222,7 @@ static u32 UFI_exec_write_structure(struct dpu_rank_t *rank, u8 ci_mask,
 				    u64 structure)
 {
 	u32 status = DPU_OK;
-	u64 *cmds = GET_CMDS(rank);
+	u64 *cmds = GET_CMDS(rank); //체크
 	struct dpu_control_interface_context *ci = GET_CI_CONTEXT(rank);
 	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
 	u8 each_ci;
