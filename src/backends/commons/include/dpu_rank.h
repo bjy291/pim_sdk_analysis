@@ -47,14 +47,16 @@ struct dpu_memory_repair_t {
 struct dpu_configuration_slice_info_t {
     uint64_t byte_order;
     uint64_t structure_value; // structure register is overwritten by debuggers, we need a place where debugger
-    // can access the last structure so that it replays the last write_structure command.
+    // can access the last structure so that it replays the last write_structure command. 
+    //구조 레지스터가 디버거에 의해 덮어쓰여지기 때문에 디버거가 마지막 write_structure 명령을 재생할 수 있도록 마지막 구조에 액세스할 수 있는 장소가 필요합니다.
+
     struct dpu_slice_target slice_target;
 
-    dpu_bitfield_t host_mux_mram_state; // Contains the state of all the MRAM muxes
+    dpu_bitfield_t host_mux_mram_state; // Contains the state of all the MRAM muxes 모든 MRAM 멀티플렉서의 상태를 포함합니다.
 
     dpu_selected_mask_t dpus_per_group[DPU_MAX_NR_GROUPS];
 
-    dpu_selected_mask_t enabled_dpus;
+    dpu_selected_mask_t enabled_dpus; //uint32_t
     bool all_dpus_are_enabled;
 };
 

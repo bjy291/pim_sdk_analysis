@@ -184,10 +184,12 @@ __API_SYMBOL__ u32 ufi_select_all(struct dpu_rank_t *rank, u8 *ci_mask)
 {
 	u32 status = DPU_OK;
 	u64 structs[DPU_MAX_NR_CIS];
-	u64 *cmds = GET_CMDS(rank);
-	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
-	struct dpu_configuration_slice_info_t *info =
-		GET_CI_CONTEXT(rank)->slice_info;
+	u64 *cmds = GET_CMDS(rank); // 전송할 cmds[DPU_MAX_NR_CIS]
+	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; // 컨트롤 인터페이스의 개수?
+
+	//이 구조에는 디버거가 이를 제어하고 애플리케이션이 올바르게 재개되도록 컨텍스트를 복원할 수 있도록 모든 애플리케이션에서 공유해야 하는 모든 정보가 포함
+	struct dpu_configuration_slice_info_t *info = 
+		GET_CI_CONTEXT(rank)->slice_info; //#define GET_CI_CONTEXT(r) (&(r)->runtime.control_interface), 슬라이스 정보?
 
 	u8 mask = *ci_mask;
 	bool do_select = false;
@@ -197,41 +199,41 @@ __API_SYMBOL__ u32 ufi_select_all(struct dpu_rank_t *rank, u8 *ci_mask)
 	ci_prepare_mask(structs, 0, 0);
 
 	for_each_ci (each_ci, nr_cis, mask) {
-		struct dpu_configuration_slice_info_t *ci_info = &info[each_ci];
+		struct dpu_configuration_slice_info_t *ci_info = &info[each_ci]; //체크
 
-		if (ci_info->all_dpus_are_enabled) {
-			if (ci_info->slice_target.type !=
+		if (ci_info->all_dpus_are_enabled) { //boolean
+			if (ci_info->slice_target.type != //target all
 			    DPU_SLICE_TARGET_ALL) {
-				structs[each_ci] = CI_SELECT_ALL_STRUCT;
-				cmds[each_ci] = CI_SELECT_ALL_FRAME;
+				structs[each_ci] = CI_SELECT_ALL_STRUCT; //cmds 
+				cmds[each_ci] = CI_SELECT_ALL_FRAME; //cmds
 				ci_info->slice_target.type =
 					DPU_SLICE_TARGET_ALL;
 				do_select = true;
 			}
 		} else {
 			if ((ci_info->slice_target.type !=
-			     DPU_SLICE_TARGET_GROUP) ||
+			     DPU_SLICE_TARGET_GROUP) || //target group?
 			    (ci_info->slice_target.group_id !=
 			     DPU_ENABLED_GROUP)) {
 				if (ci_info->enabled_dpus != 0) {
 					structs[each_ci] =
 						CI_SELECT_GROUP_STRUCT;
 					cmds[each_ci] = CI_SELECT_GROUP_FRAME(
-						DPU_ENABLED_GROUP);
+						DPU_ENABLED_GROUP);                        //#define DPU_ENABLED_GROUP 0, #define DPU_DISABLED_GROUP 1
 					ci_info->slice_target.type =
 						DPU_SLICE_TARGET_GROUP;
 					ci_info->slice_target.group_id =
 						DPU_ENABLED_GROUP;
 					do_select = true;
 				} else {
-					mask &= ~CI_MASK_ONE(each_ci);
+					mask &= ~CI_MASK_ONE(each_ci); //#define CI_MASK_ONE(ci) (1u << (ci))
 				}
 			}
 		}
 	}
 
-	if (do_select) {
-		FF(UFI_exec_void_frames(rank, mask, structs, cmds));
+	if (do_select) { //if true
+		FF(UFI_exec_void_frames(rank, mask, structs, cmds)); //체크
 	}
 
 	*ci_mask = mask;
@@ -944,11 +946,11 @@ end:
 }
 
 __API_SYMBOL__ u32 ufi_wram_write(struct dpu_rank_t *rank, u8 ci_mask,
-				  u32 **src, u16 offset, u16 len)
+				  u32 **src, u16 offset, u16 len) //src : data, offset : addr, len : size
 {
 	u32 status = DPU_OK;
 	u64 *cmds = GET_CMDS(rank);
-	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
+	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //number of CI
 	u16 each_address;
 	u8 each_ci;
 
@@ -1219,12 +1221,16 @@ __API_SYMBOL__ u32 ufi_debug_pc_sample(struct dpu_rank_t *rank, u8 ci_mask)
 }
 
 static u32 UFI_exec_write_structure(struct dpu_rank_t *rank, u8 ci_mask,
-				    u64 structure)
+				    u64 structure) //addr를 담은 command
 {
 	u32 status = DPU_OK;
+<<<<<<< HEAD
 	u64 *cmds = GET_CMDS(rank); //체크
+=======
+	u64 *cmds = GET_CMDS(rank); //8공간 cmds 배열 불러오는 듯?
+>>>>>>> a31321e987ff89d2221b739ea294029eb75c9707
 	struct dpu_control_interface_context *ci = GET_CI_CONTEXT(rank);
-	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
+	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //CI 개수? 체크
 	u8 each_ci;
 
 	bool do_write_structure = false;

@@ -106,12 +106,12 @@ __API_SYMBOL__ u32 ci_fill_selected_dpu_mask(struct dpu_rank_t *rank, u8 ci,
 
 	return DPU_OK;
 }
-
+//launch
 __API_SYMBOL__ u32 ci_exec_void_cmd(struct dpu_rank_t *rank, u64 *commands)
 {
 	return exec_cmd(rank, commands, false);
 }
-
+//write
 __API_SYMBOL__ u32 ci_exec_wait_mask_cmd(struct dpu_rank_t *rank, u64 *commands)
 {
 	return exec_cmd(rank, commands, true);
@@ -277,13 +277,13 @@ static u32 exec_cmd(struct dpu_rank_t *rank, u64 *commands,
 	bool in_progress, timeout;
 	u32 nr_retries = NB_RETRY_FOR_VALID_RESULT;
 
-	if ((status = compute_masks(rank, commands, result_masks, expected,
+	if ((status = compute_masks(rank, commands, result_masks, expected, //ci_mask 계산.
 				    &ci_mask, add_select_mask, is_done)) !=
 	    DPU_OK) {
 		return status;
 	}
 
-	expected_color = GET_CI_CONTEXT(rank)->color & ci_mask;
+	expected_color = GET_CI_CONTEXT(rank)->color & ci_mask; //#define GET_CI_CONTEXT(r) (&(r)->runtime.control_interface)
 	invert_color(rank, ci_mask);
 
 	if ((status = ci_commit_commands(rank, commands)) != DPU_OK) {
@@ -291,7 +291,7 @@ static u32 exec_cmd(struct dpu_rank_t *rank, u64 *commands,
 	}
 
 	do {
-		if ((status = ci_update_commands(rank, data)) != DPU_OK) {
+		if ((status = ci_update_commands(rank, data)) != DPU_OK) { //read_from_cis, xeon_sp_read_from_cis
 			return status;
 		}
 
@@ -299,11 +299,13 @@ static u32 exec_cmd(struct dpu_rank_t *rank, u64 *commands,
 			rank, data, expected, result_masks, expected_color,
 			is_done);
 		timeout = (nr_retries--) == 0;
-	} while (in_progress && !timeout);
+	} while (in_progress && !timeout); //timeout boolean
 
 	if (in_progress) {
 		/* Either we are in full log:
 		 * and then log at least one packet as it has important info to debug.
+		 우리는 전체 로그에 있습니다:
+		그런 다음 디버깅할 중요한 정보가 있으므로 적어도 하나의 패킷을 기록합니다.
 		 */
 		LOGV_PACKET(rank, data, READ_DIR);
 
@@ -354,13 +356,13 @@ static u8 compute_ci_mask(struct dpu_rank_t *rank, const u64 *commands)
 
 static u32 compute_masks(struct dpu_rank_t *rank, const u64 *commands,
 			 u64 *masks, u64 *expected, u8 *cis,
-			 bool add_select_mask, bool *is_done)
+			 bool add_select_mask, bool *is_done) //add_select_mask : true
 {
 	u8 ci_mask = 0;
 
 	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
 	u8 nr_dpus =
-		GET_DESC_HW(rank)->topology.nr_of_dpus_per_control_interface;
+		GET_DESC_HW(rank)->topology.nr_of_dpus_per_control_interface; //dpu 개수?
 
 	u8 each_ci;
 
@@ -368,15 +370,15 @@ static u32 compute_masks(struct dpu_rank_t *rank, const u64 *commands,
 	u32 status;
 
 	for (each_ci = 0; each_ci < nr_cis; ++each_ci) {
-		if (commands[each_ci] != CI_EMPTY) {
+		if (commands[each_ci] != CI_EMPTY) { //not empty
 			ci_mask |= (1 << each_ci);
-			masks[each_ci] |= 0xFF0000FF00000000l;
-			expected[each_ci] |= 0x000000FF00000000l;
+			masks[each_ci] |= 0xFF0000FF00000000l; //높은 비트 64비트와 낮은 비트 8비트 //해당 비트를 1로 설정
+			expected[each_ci] |= 0x000000FF00000000l; //특정 중간 비트를 1로 설정
 
-			if (add_select_mask) {
-				masks[each_ci] |= (1 << nr_dpus) - 1;
+			if (add_select_mask) { //true,,,,, launch는 다음이 실행 안 됌.
+				masks[each_ci] |= (1 << nr_dpus) - 1; //2^nr_dpus 제곱 or masks[each_ci]
 
-				if ((status = ci_fill_selected_dpu_mask(
+				if ((status = ci_fill_selected_dpu_mask( //dpu mask 계산, target all, dpu, group 
 					     rank, each_ci, &dpu_mask)) !=
 				    DPU_OK) {
 					return status;
