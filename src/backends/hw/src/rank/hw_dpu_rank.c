@@ -622,7 +622,7 @@ hw_commit_commands(struct dpu_rank_t *rank, dpu_rank_buffer_t buffer)
     int ret;
 
     switch (params->mode) {
-        case DPU_REGION_MODE_PERF:
+        case DPU_REGION_MODE_PERF: // NULL이면 여기 실행
             params->translate.write_to_cis(&params->translate,
                 rank_context->control_interfaces,
                 params->channel_id,

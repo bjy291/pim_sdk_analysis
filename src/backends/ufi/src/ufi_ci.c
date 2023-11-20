@@ -39,7 +39,7 @@ __API_SYMBOL__ u32 ci_commit_commands(struct dpu_rank_t *rank, u64 *commands)
 
 	LOGV_PACKET(rank, commands, WRITE_DIR);
 
-	ret = debug_record_last_cmd(rank, WRITE_DIR, commands);
+	ret = debug_record_last_cmd(rank, WRITE_DIR, commands); //디버깅 목적
 	if (ret != DPU_OK)
 		return ret;
 
@@ -284,7 +284,8 @@ static u32 exec_cmd(struct dpu_rank_t *rank, u64 *commands,
 	}
 
 	expected_color = GET_CI_CONTEXT(rank)->color & ci_mask; //#define GET_CI_CONTEXT(r) (&(r)->runtime.control_interface)
-	invert_color(rank, ci_mask);
+	//expected_color : 0, 1 반복
+	invert_color(rank, ci_mask); // 2->3, 3->2 반복
 
 	if ((status = ci_commit_commands(rank, commands)) != DPU_OK) {
 		return status;
@@ -360,13 +361,13 @@ static u32 compute_masks(struct dpu_rank_t *rank, const u64 *commands,
 {
 	u8 ci_mask = 0;
 
-	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
+	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; // 8
 	u8 nr_dpus =
-		GET_DESC_HW(rank)->topology.nr_of_dpus_per_control_interface; //dpu 개수?
-
+		GET_DESC_HW(rank)->topology.nr_of_dpus_per_control_interface; //dpu 개수 8
+     //expected : 0 -> 1095216660480, 1095216660481
 	u8 each_ci;
 
-	u8 dpu_mask;
+	u8 dpu_mask; // 0 -> 1
 	u32 status;
 
 	for (each_ci = 0; each_ci < nr_cis; ++each_ci) {
@@ -390,7 +391,7 @@ static u32 compute_masks(struct dpu_rank_t *rank, const u64 *commands,
 			is_done[each_ci] = true;
 	}
 
-	*cis = ci_mask;
+	*cis = ci_mask; // 0 -> 1, 1 -> 1, ~~~
 
 	return DPU_OK;
 }

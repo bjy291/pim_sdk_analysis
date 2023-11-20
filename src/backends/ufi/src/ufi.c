@@ -956,13 +956,13 @@ __API_SYMBOL__ u32 ufi_wram_write(struct dpu_rank_t *rank, u8 ci_mask,
 	u16 each_address;
 	u8 each_ci;
 
-	for (each_address = 0; each_address < len; ++each_address) {
+	for (each_address = 0; each_address < len; ++each_address) { ///대충 120, 3번 돔.
 		u16 addr = offset + each_address;
 
-		FF(UFI_exec_write_structure(rank, ci_mask,
-					    CI_WRAM_WRITE_WORD_STRUCT(addr)));
+		FF(UFI_exec_write_structure(rank, ci_mask, 
+					    CI_WRAM_WRITE_WORD_STRUCT(addr))); // addr 0부터 여러번 ~ 쫘라락 해당 dpu의 CI로 전송.
 
-		for_each_ci (each_ci, nr_cis, ci_mask) {
+		for_each_ci (each_ci, nr_cis, ci_mask) { //계속 0
 			cmds[each_ci] = CI_WRAM_WRITE_WORD_FRAME(
 				src[each_ci][each_address], addr);
 		}
@@ -1226,11 +1226,7 @@ static u32 UFI_exec_write_structure(struct dpu_rank_t *rank, u8 ci_mask,
 				    u64 structure) //addr를 담은 command
 {
 	u32 status = DPU_OK;
-<<<<<<< HEAD
-	u64 *cmds = GET_CMDS(rank); //체크
-=======
 	u64 *cmds = GET_CMDS(rank); //8공간 cmds 배열 불러오는 듯?
->>>>>>> a31321e987ff89d2221b739ea294029eb75c9707
 	struct dpu_control_interface_context *ci = GET_CI_CONTEXT(rank);
 	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //CI 개수? 체크
 	u8 each_ci;
