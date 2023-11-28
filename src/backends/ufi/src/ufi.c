@@ -975,20 +975,20 @@ end:
 }
 
 __API_SYMBOL__ u32 ufi_wram_read(struct dpu_rank_t *rank, u8 ci_mask, u32 **dst,
-				 u16 offset, u16 len)
-{
+				 u16 offset, u16 len)// len : nb_of_words : 1, offset: 4,5
+{ //len은 계속 1?
 	u32 status = DPU_OK;
-	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces;
+	u8 nr_cis = GET_DESC_HW(rank)->topology.nr_of_control_interfaces; //8
 	u32 words[DPU_MAX_NR_CIS];
 	u16 each_address;
 	u8 each_ci;
-
-	for (each_address = 0; each_address < len; ++each_address) {
+    ///ci_mask도 아마 dpu 수가 아니라 pim number 같은 2^n으로 상승, rank에 pim~ 여러개니까
+	for (each_address = 0; each_address < len; ++each_address) { //dpu1 : 0, dpu2 : 0
 		FF(UFI_exec_32bit_frame(
 			rank, ci_mask, CI_WRAM_READ_WORD_STRUCT,
 			CI_WRAM_READ_WORD_FRAME(offset + each_address), words));
-
-		for_each_ci (each_ci, nr_cis, ci_mask) {
+ 
+		for_each_ci (each_ci, nr_cis, ci_mask) {//dpu1 : 0, dpu2 : 일땐 첫 번째 dpu는 0, 두 번째는 1
 			dst[each_ci][each_address] = words[each_ci];
 		}
 	}

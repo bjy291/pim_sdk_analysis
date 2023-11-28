@@ -623,15 +623,16 @@ end:
 	return status;
 }
 
+//2번 호출.
 __API_SYMBOL__ dpu_error_t ci_copy_from_wrams_dpu(struct dpu_t *dpu,
-						  dpuword_t *destination,
-						  wram_addr_t wram_word_offset,
-						  wram_size_t nb_of_words)
+						  dpuword_t *destination, // 0, dpu 2 -> 24. dpu3 -> 24,,, 2번째는 다 0
+						  wram_addr_t wram_word_offset, //wram_word_offset는 ci_copy_from_wrams_dpu가 총 2번 호출되는데 4, 5의 값 
+						  wram_size_t nb_of_words)// 계속 1?
 {
 	struct dpu_rank_t *rank = dpu->rank;
 
 	dpu_error_t status;
-	dpu_slice_id_t slice_id = dpu->slice_id;
+	dpu_slice_id_t slice_id = dpu->slice_id; //dpu1 : 0, dpu2 : 1, dpu3 : 2 <-- PIM 아이디인듯, PIM0은 0, PIM1은 1~~~ , 
 	uint8_t mask = CI_MASK_ONE(slice_id);
 	dpuword_t *wram_array[DPU_MAX_NR_CIS];
 	wram_array[slice_id] = destination;
